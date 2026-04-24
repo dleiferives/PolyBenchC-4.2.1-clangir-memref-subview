@@ -61,11 +61,24 @@ include $configFile
 
 EXTRA_FLAGS=$extra_flags{$kernel}
 
+.PHONY: mlir cir clean
+
 $kernel: $kernel.c $kernel.h
 	\${VERBOSE} \${CC} -o $kernel $kernel.c \${CFLAGS} -I. -I$utilityDir $utilityDir/polybench.c \${EXTRA_FLAGS}
 
+cir: $kernel.cir
+
+mlir: $kernel.mlir
+
+$kernel.cir:
+	\${VERBOSE} \${CC} -emit-cir -S $kernel.c \${CFLAGS} -I. -I$utilityDir $utilityDir/polybench.c \${EXTRA_FLAGS}
+	cat $kernel.mlir polybench.mlir > $kernel.cir
+
+$kernel.cir.mlir: $kernel.cir
+	cir-opt $kernel.cir --cir-to-mlir -o $kernel.cir.mlir 
+
 clean:
-	@ rm -f $kernel
+	@ rm -f $kernel $kernel.cir $kernel.mlir
 
 EOF
 
@@ -80,8 +93,9 @@ if ($GEN_CONFIG) {
 open FILE, '>'.$TARGET_DIR.'/config.mk';
 
 print FILE << "EOF";
-CC=gcc
-CFLAGS=-O2 -DPOLYBENCH_DUMP_ARRAYS -DPOLYBENCH_USE_C99_PROTO
+export PATH := /home/dleiferives/tools/clangir/clangir/build/bin:\${PATH}
+CC=/home/dleiferives/tools/clangir/clangir/build/bin/clang
+CFLAGS=-O2 -DPOLYBENCH_DUMP_ARRAYS -DPOLYBENCH_USE_C99_PROTO -DPOLYBENCH_TIME
 EOF
 
 close FILE;
