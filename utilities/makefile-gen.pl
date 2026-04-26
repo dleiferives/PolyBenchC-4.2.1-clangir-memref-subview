@@ -68,17 +68,17 @@ $kernel: $kernel.c $kernel.h
 
 cir: $kernel.cir
 
-mlir: $kernel.mlir
+mlir: $kernel.cir.mlir
 
 $kernel.cir:
-	\${VERBOSE} \${CC} -emit-cir -S $kernel.c \${CFLAGS} -I. -I$utilityDir $utilityDir/polybench.c \${EXTRA_FLAGS}
-	cat $kernel.mlir polybench.mlir > $kernel.cir
+	\${VERBOSE} \${CC} -emit-cir  $kernel.c \${CFLAGS} -I. -I$utilityDir $utilityDir/polybench.c \${EXTRA_FLAGS}
+	cp $kernel.mlir $kernel.cir
 
 $kernel.cir.mlir: $kernel.cir
 	cir-opt $kernel.cir --cir-to-mlir -o $kernel.cir.mlir 
 
 clean:
-	@ rm -f $kernel $kernel.cir $kernel.mlir
+	@ rm -f $kernel *.cir *.mlir
 
 EOF
 
@@ -95,7 +95,7 @@ open FILE, '>'.$TARGET_DIR.'/config.mk';
 print FILE << "EOF";
 export PATH := /home/dleiferives/tools/clangir/clangir/build/bin:\${PATH}
 CC=/home/dleiferives/tools/clangir/clangir/build/bin/clang
-CFLAGS=-O2 -DPOLYBENCH_DUMP_ARRAYS -DPOLYBENCH_USE_C99_PROTO -DPOLYBENCH_TIME
+CFLAGS=-O2 -DPOLYBENCH_USE_C99_PROTO 
 EOF
 
 close FILE;
